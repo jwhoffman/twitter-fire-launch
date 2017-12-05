@@ -283,13 +283,14 @@ fireball_word <- contents_fireball %>%
 library(reshape2) 
 
 ##############################################################################
-# Calculates a sentiment score for each tweet
+# Calculates a sentiment score for each tweet - if group_by 'line'
+# Look at both average and sum
 ##############################################################################
 fireball_sentiment <- fireball_word %>%
   anti_join(stop_pt) %>%
   inner_join(lexicon_pt) %>%
-  group_by(Category, line) %>%
-  summarise(sentiment = sum(polarity))
+  group_by(Category) %>% # take away line to group by category
+  summarise(sentiment = mean(polarity))
 
 hist(fireball_sentiment$sentiment)
 ##############################################################################
@@ -394,58 +395,64 @@ jackfire_word <- contents_jackfire %>%
 library(reshape2) 
 
 ##############################################################################
-# Calculates a sentiment score for each tweet
+# Calculates a sentiment score for each tweet - if group_by 'line'
+# Look at both average and sum
 ##############################################################################
 jackfire_sentiment <- jackfire_word %>%
   anti_join(stop_pt) %>%
   inner_join(lexicon_pt) %>%
-  group_by(Category, line) %>%
-  summarise(sentiment = sum(polarity))
+  group_by(Category) %>% # take away line to summarise by category
+  summarise(sentiment = mean(polarity))
 
-hist(jackfire_sentiment$sentiment)
+# Notice the positive sentiment for jackfire!!!!
+# Sentiment for fireball was not so good!
+# Statistically significant - need to test.
+
+
+barplot(jackfire_sentiment$sentiment) # get a better visual!
 ##############################################################################
 
 # Try using the stopwords package as well
 
-fireball_n_plot <- fireball_word %>%
+jackfire_n_plot <- jackfire_word %>%
   anti_join(stop_pt) %>%
   count(word, sort=TRUE) %>%
-  filter(n > 25) %>%
+  filter(n > 50) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-fireball_n_plot # looks like some stopwords got through
+jackfire_n_plot # looks like some stopwords got through
 
-# fireball bigrams
+# jackfire bigrams
 
-fireball_bigrams <- contents_fireball %>%
+jackfire_bigrams <- contents_jackfire %>%
   unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
   separate(bigram, c("word1", "word2"), sep = " ") %>%
   filter(!word1 %in% stop_pt$word,
          !word2 %in% stop_pt$word)
 
-fireball_bigrams_united <- fireball_bigrams %>%
+jackfire_bigrams_united <- jackfire_bigrams %>%
   unite(bigram, word1, word2, sep=" ")
 
-fireball_n_plot_bigrams <- fireball_bigrams_united %>%
+jackfire_n_plot_bigrams <- jackfire_bigrams_united %>%
   # anti_join(stop_pt) %>%
   count(bigram, sort=TRUE) %>%
-  filter(n > 10) %>%
+  filter(n > 30) %>%
   mutate(bigram = reorder(bigram, n)) %>%
   ggplot(aes(bigram, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-fireball_n_plot_bigrams # notice the amount of english words!
+jackfire_n_plot_bigrams 
 
-# fireball trigrams
+# jackfire trigrams
 
 
-fireball_trigrams <- contents_fireball %>%
+jackfire_trigrams <- contents_jackfire %>%
   unnest_tokens(trigram, text, token = "ngrams", n = 3) %>%
   separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%
   filter(!word1 %in% stop_pt$word,
@@ -453,17 +460,22 @@ fireball_trigrams <- contents_fireball %>%
          !word3 %in% stop_pt$word)
 
 
-fireball_trigrams_united <- fireball_trigrams %>%
+jackfire_trigrams_united <- jackfire_trigrams %>%
   unite(trigram, word1, word2, word3, sep=" ")
 
-fireball_n_plot_trigrams <- fireball_trigrams_united %>%
+jackfire_n_plot_trigrams <- jackfire_trigrams_united %>%
   # anti_join(stop_pt) %>%
   count(trigram, sort=TRUE) %>%
-  filter(n > 3) %>%
+  filter(n > 25) %>%
   mutate(trigram = reorder(trigram, n)) %>%
   ggplot(aes(trigram, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-fireball_n_plot_trigrams  # Notice the amount of english words!!!!
+jackfire_n_plot_trigrams  
+
+#  Notes - plot sentiment over time, use gender, klout score, region
+##############################################################################
+# jackhoney
+
