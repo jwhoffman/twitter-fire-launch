@@ -1,1 +1,1 @@
-# Text Mining with Tidy Text Format
+# Twitter Text Mining Using a Tidy Text Approach
