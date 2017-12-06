@@ -7,14 +7,13 @@ library(lexiconPT)
 library(ggplot2)
 library(stopwords)
 library(tidyr)
+library(readxl)
 
 # Read in the twitter data
-data <- read_csv("data.csv")
+data <- read_xlsx("data.xlsx")
 
 
 
-# Creating a new column called 'Date' that represents date format
-data$Date <- as.Date(data$Date..EST., "%m/%d/%Y %H:%M")
 
 # Arrange tweets in chronological order
 data <- data %>%
@@ -22,10 +21,12 @@ data <- data %>%
   filter(Date >= '2017-01-01')
 
 # Exploring the different regions and urban areas
-unique(data$State.Region) # 28 unique regions
-unique(data$City.Urban.Area) # 288 unique cities
+unique(data$State) # 28 unique regions
+unique(data$City) # 288 unique cities
 
 # Exploring distribution of klout score
+
+
 hist(data$Klout.Score)
 summary(data$Klout.Score)
 
@@ -57,7 +58,7 @@ sentiment <- contents_word %>%
 n_plot <- contents_word %>%
   anti_join(stop_pt) %>%
   count(word, sort=TRUE) %>%
-  filter(n > 2000) %>%
+  filter(n > 1000) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
   geom_col() +
@@ -130,7 +131,7 @@ trigrams_united <- contents_trigrams %>%
 n_plot_trigrams <- trigrams_united %>%
   # anti_join(stop_pt) %>%
   count(trigram, sort=TRUE) %>%
-  filter(n > 100) %>%
+  filter(n > 50) %>%
   mutate(trigram = reorder(trigram, n)) %>%
   ggplot(aes(trigram, n)) +
   geom_col() +
@@ -143,21 +144,19 @@ n_plot_trigrams
 # Tokenizing by N-gram - Filtered Data
 
 # read in filtered data
-cerveja <- read_csv("cerveja.csv")
-fireball <- read_csv("fireball.csv")
-gelodecoc <- read_csv("gelodecoco.csv")
-jackfire <- read_csv("jackfire.csv")
-jackhoney <- read_csv("jackhoney.csv")
-jager <- read_csv("jager.csv")
+
+fireball <- read_xlsx("fireball.xlsx")
+jackfire <- read_xlsx("jackfire.xlsx")
+jackhoney <- read_xlsx("jackhoney.xlsx")
+jager <- read_xlsx("jager.xlsx")
 
 ##############################################################################
-# cerveja
+# honey jack
 
-# Creating a new column called 'Date' that represents date format
-cerveja$Date <- as.Date(cerveja$Date..EST., "%m/%d/%Y %H:%M")
+
 
 # Arrange tweets in chronological order
-cerveja <- cerveja %>%
+jackhoney <- jackhoney %>%
   arrange(Date) %>%
   filter(Date >= '2017-01-01')
 
@@ -170,61 +169,62 @@ hist(cerveja$Klout.Score)
 summary(cerveja$Klout.Score)
 
 # Create a dataframe of the tweets only, which has a column name of 'Contents'
-contents_cerveja <- cerveja %>%
-  transmute(line = row_number(), text = Contents) %>%
+contents_jackhoney <- jackhoney %>%
+  mutate(line = row_number(), text = Contents) %>%
+  arrange(Category, Date)
 
+contents_jackhoney
 
-contents_cerveja
-
-cerveja_word <- contents_cerveja %>%
+jackhoney_word <- contents_jackhoney %>%
   unnest_tokens(word, text)
 
-cerveja_sentiment <- cerveja_word %>%
+jackhoney_sentiment <- jackhoney_word %>%
   anti_join(stop_pt) %>%
-  inner_join(lexicon_pt) 
-# count(word, sort = TRUE)
+  inner_join(lexicon_pt) %>%
+  group_by(Category) %>% # take away line to group by category
+  summarise(sentiment = mean(polarity))
 
 # Try using the stopwords package as well
 
-cerveja_n_plot <- cerveja_word %>%
+jackhoney_n_plot <- jackhoney_word %>%
   anti_join(stop_pt) %>%
   count(word, sort=TRUE) %>%
-  filter(n > 500) %>%
+  filter(n > 100) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-cerveja_n_plot # looks like some stopwords got through
+jackhoney_n_plot # looks like some stopwords got through
 
-# cerveja bigrams
+# jackhoney bigrams
 
-cerveja_bigrams <- contents_cerveja %>%
+jackhoney_bigrams <- contents_jackhoney %>%
   unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
   separate(bigram, c("word1", "word2"), sep = " ") %>%
   filter(!word1 %in% stop_pt$word,
          !word2 %in% stop_pt$word)
 
-cerveja_bigrams_united <- cerveja_bigrams %>%
+jackhoney_bigrams_united <- jackhoney_bigrams %>%
   unite(bigram, word1, word2, sep=" ")
 
-cerveja_n_plot_bigrams <- cerveja_bigrams_united %>%
+jackhoney_n_plot_bigrams <- jackhoney_bigrams_united %>%
   # anti_join(stop_pt) %>%
   count(bigram, sort=TRUE) %>%
-  filter(n > 100) %>%
+  filter(n > 15) %>%
   mutate(bigram = reorder(bigram, n)) %>%
   ggplot(aes(bigram, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-cerveja_n_plot_bigrams
+jackhoney_n_plot_bigrams
 
-# cerveja trigrams
+# jackhoney trigrams
 
 
-cerveja_trigrams <- contents_cerveja %>%
+jackhoney_trigrams <- contents_jackhoney %>%
   unnest_tokens(trigram, text, token = "ngrams", n = 3) %>%
   separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%
   filter(!word1 %in% stop_pt$word,
@@ -232,20 +232,20 @@ cerveja_trigrams <- contents_cerveja %>%
          !word3 %in% stop_pt$word)
 
 
-cerveja_trigrams_united <- cerveja_trigrams %>%
+jackhoney_trigrams_united <- jackhoney_trigrams %>%
   unite(trigram, word1, word2, word3, sep=" ")
 
-cerveja_n_plot_trigrams <- cerveja_trigrams_united %>%
+jackhoney_n_plot_trigrams <- jackhoney_trigrams_united %>%
   # anti_join(stop_pt) %>%
   count(trigram, sort=TRUE) %>%
-  filter(n > 15) %>%
+  filter(n > 3) %>%
   mutate(trigram = reorder(trigram, n)) %>%
   ggplot(aes(trigram, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
 
-cerveja_n_plot_trigrams
+jackhoney_n_plot_trigrams
 
 ##############################################################################
 # fireball
@@ -349,7 +349,7 @@ fireball_trigrams_united <- fireball_trigrams %>%
 fireball_n_plot_trigrams <- fireball_trigrams_united %>%
   # anti_join(stop_pt) %>%
   count(trigram, sort=TRUE) %>%
-  filter(n > 3) %>%
+  filter(n > 5) %>%
   mutate(trigram = reorder(trigram, n)) %>%
   ggplot(aes(trigram, n)) +
   geom_col() +
@@ -417,7 +417,7 @@ barplot(jackfire_sentiment$sentiment) # get a better visual!
 jackfire_n_plot <- jackfire_word %>%
   anti_join(stop_pt) %>%
   count(word, sort=TRUE) %>%
-  filter(n > 50) %>%
+  filter(n > 25) %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n)) +
   geom_col() +
@@ -440,7 +440,7 @@ jackfire_bigrams_united <- jackfire_bigrams %>%
 jackfire_n_plot_bigrams <- jackfire_bigrams_united %>%
   # anti_join(stop_pt) %>%
   count(bigram, sort=TRUE) %>%
-  filter(n > 30) %>%
+  filter(n > 1) %>%
   mutate(bigram = reorder(bigram, n)) %>%
   ggplot(aes(bigram, n)) +
   geom_col() +
@@ -466,7 +466,7 @@ jackfire_trigrams_united <- jackfire_trigrams %>%
 jackfire_n_plot_trigrams <- jackfire_trigrams_united %>%
   # anti_join(stop_pt) %>%
   count(trigram, sort=TRUE) %>%
-  filter(n > 25) %>%
+  filter(n > 1) %>%
   mutate(trigram = reorder(trigram, n)) %>%
   ggplot(aes(trigram, n)) +
   geom_col() +
